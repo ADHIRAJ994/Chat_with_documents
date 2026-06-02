@@ -1,19 +1,21 @@
 import os
 import time
-import pickle
 import numpy as np
 from pathlib import Path
 from dotenv import load_dotenv
-
+import traceback
+# Updated LangChain v0.2 imports
 from langchain_community.vectorstores import FAISS
-from langchain_community.embeddings import HuggingFaceEmbeddings
+from langchain_huggingface import HuggingFaceEmbeddings
 from langchain_community.document_loaders import PyPDFLoader
 from langchain_community.document_loaders import TextLoader
-from langchain_classic.text_splitter import RecursiveCharacterTextSplitter
-from langchain_classic.chains import ConversationalRetrievalChain
-from langchain_classic.memory import ConversationBufferMemory
+from langchain_text_splitters import RecursiveCharacterTextSplitter
+from langchain.chains import ConversationalRetrievalChain
+from langchain.memory import ConversationBufferMemory
 from langchain_core.prompts import PromptTemplate
 from langchain_groq import ChatGroq
+
+
 # RAG prompt template
 RAG_PROMPT_TEMPLATE = """You are a helpful AI assistant that answers questions
 based on the provided document context.
@@ -111,11 +113,18 @@ def load_vector_store(vector_store_path, embeddings):
 def get_embeddings():
     """Load HuggingFace embedding model"""
 
-    embeddings = HuggingFaceEmbeddings(
-        model_name="sentence-transformers/all-MiniLM-L6-v2",
-        model_kwargs={'device': 'cpu'},
-        encode_kwargs={'normalize_embeddings': True}
-    )
+    try:
+        embeddings = HuggingFaceEmbeddings(
+            model_name="sentence-transformers/all-MiniLM-L6-v2",
+            model_kwargs={"device": "cpu"},
+            encode_kwargs={"normalize_embeddings": True},
+        )
+        print("Embeddings loaded successfully")
+
+    except Exception as e:
+        print("\nFULL ERROR:")
+        print(traceback.format_exc())
+        raise
 
     return embeddings
 
@@ -138,7 +147,7 @@ class RAGPipeline:
     """Complete RAG Pipeline for Chat with Documents"""
 
     def __init__(self, groq_api_key, vector_store=None,
-             model_name="openai/gpt-oss-120b"):
+                 model_name="openai/gpt-oss-120b"):
 
         self.groq_api_key = groq_api_key
         self.model_name = model_name
@@ -241,7 +250,7 @@ class RAGPipeline:
         if self.chain is None:
             return {
                 'question': question,
-                'answer': 'Please upload documents first before asking questions.',
+                'answer': 'Please upload documents first.',
                 'sources': [],
                 'num_sources': 0,
                 'response_time': 0

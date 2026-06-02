@@ -5,9 +5,9 @@ from pathlib import Path
 from dotenv import load_dotenv
 
 import streamlit as st
-
 from rag_pipeline import RAGPipeline
-
+from langchain_community.vectorstores import FAISS
+from langchain_huggingface import HuggingFaceEmbeddings
 # Page config
 st.set_page_config(
     page_title="Chat with Documents",
